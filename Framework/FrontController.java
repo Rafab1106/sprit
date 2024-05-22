@@ -1,53 +1,80 @@
-package controller.front;
+package mg.itu.controleur;
+
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import framework.*;
-/**
- * FrontController
- */
+import java.util.Map;
+
 public class FrontController extends HttpServlet {
-    private boolean test = false;
-    List<String>valiny; 
-    public void doGet(HttpServletRequest request, HttpServletResponse response){
-        try {
-            processRequest(request, response);
+    private Map<String, Mapping> urlMappings;
 
+    @Override
+    public void init() throws ServletException {
+        urlMappings = new HashMap<>();
+        try {
+            ServletContext context = getServletContext();
+            String chemin = context.getInitParameter("chemin");
+            List<String> controllers = scan(chemin); // Utilisation de la méthode scan mise à jour
+            for (String controller : controllers) {
+                Class<?> clazz = Class.forName(controller);
+                Method[] methods = clazz.getDeclaredMethods();
+                for (Method method : methods) {
+                    if (method.isAnnotationPresent(GET.class)) {
+                        GET annotation = method.getAnnotation(GET.class);
+                        String url = annotation.value();
+                        urlMappings.put(url, new Mapping(clazz.getName(), method.getName()));
+                    }
+                }
+            }
         } catch (Exception e) {
-            System.out.println(e);
+            throw new ServletException("Erreur lors de l'initialisation du FrontController", e);
         }
     }
-    public void doPost(HttpServletRequest request, HttpServletResponse response){
-        try {
-            processRequest(request, response);
 
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-        
-    }
-    public void processRequest(HttpServletRequest request, HttpServletResponse response)throws Exception {
-        
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
-        ServletContext context = getServletContext();
-        String chemin = context.getInitParameter("chemin");
-        if (!test) {
-            valiny = scan(chemin);
-        }
-        for (String string : valiny) {
-            out.println(string);
+        try {
+            String requestUrl = request.getRequestURI().substring(request.getContextPath().length());
+            Mapping mapping = urlMappings.get(requestUrl);
+            out.println("<html>");
+            out.println("<head><title>URL Mapping</title></head>");
+            out.println("<body>");
+            if (mapping != null) {
+                out.println("<h1>URL: " + requestUrl + "</h1>");
+                out.println("<p>Class: " + mapping.getClassName() + "</p>");
+                out.println("<p>Method: " + mapping.getMethodName() + "</p>");
+            } else {
+                out.println("<h1>No method associated with URL: " + requestUrl + "</h1>");
+            }
+            out.println("</body>");
+            out.println("</html>");
+        } finally {
+            out.close();
         }
     }
-    public List<String> scan(String chemin)throws Exception{
-        List<String> liste = new ArrayList<String>();
-        try 
-        {
-            String cheminRepertoire = chemin.replace('.','/');
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    private List<String> scan(String chemin) throws Exception {
+        List<String> liste = new ArrayList<>();
+        try {
+            String cheminRepertoire = chemin.replace('.', '/');
             URL urPackage = Thread.currentThread().getContextClassLoader().getResource(cheminRepertoire);
             if (urPackage != null) {
                 File directory = new File(urPackage.getFile());
@@ -57,28 +84,17 @@ public class FrontController extends HttpServlet {
                         if (fichier.isFile() && fichier.getName().endsWith(".class")) {
                             String nomClasse = fichier.getName().substring(0, fichier.getName().length() - 6);
                             String nomCompletClasse = chemin + "." + nomClasse;
-                            Class class1 = Class.forName(nomCompletClasse);
-                            if (class1.isAnnotationPresent(Annote.class)) {
-                                Annote annotation = (Annote) class1.getAnnotation(Annote.class);
-                                if (annotation.valeur().equals("Controlleur")) {
-                                    liste.add(nomClasse +".class");
-                                }
-                            } 
-                        }
-                        else if(fichier.isDirectory()){
-                            List<String> li =  scan(cheminRepertoire + "." + fichier.getName());
+                            liste.add(nomCompletClasse);
+                        } else if (fichier.isDirectory()) {
+                            List<String> li = scan(chemin + "." + fichier.getName());
                             liste.addAll(li);
                         }
                     }
                 }
             }
-            test = true;
-
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             throw e;
         }
         return liste;
     }
-    
 }

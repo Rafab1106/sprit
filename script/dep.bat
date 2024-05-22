@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 :: Déclaration des variables
-set "work_dir=C:\Users\itu\Documents\GitHub\spring"
+set "work_dir=E:\TSITO\COURS\s3\Git\sprit"
 set "src=%work_dir%\Framework"
 set "lib=%work_dir%\lib"
 

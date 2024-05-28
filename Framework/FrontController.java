@@ -37,26 +37,73 @@ public class FrontController extends HttpServlet {
             throw new ServletException("Erreur lors de l'initialisation du FrontController", e);
         }
     }
-
+    private List<String> scan(String chemin) throws Exception {
+        List<String> liste = new ArrayList<>();
+        try {
+            String cheminRepertoire = chemin.replace('.', '/');
+            URL urPackage = Thread.currentThread().getContextClassLoader().getResource(cheminRepertoire);
+            if (urPackage != null) {
+                File directory = new File(urPackage.getFile());
+                File[] fichiers = directory.listFiles();
+                if (fichiers != null) {
+                    for (File fichier : fichiers) {
+                        if (fichier.isFile() && fichier.getName().endsWith(".class")) {
+                            String nomClasse = fichier.getName().substring(0, fichier.getName().length() - 6);
+                            String nomCompletClasse = chemin + "." + nomClasse;
+                            Class<?> clazz = Class.forName(nomCompletClasse);
+                            if (clazz.isAnnotationPresent(Controleur.class)) {
+                                System.out.println("is annote");
+                                liste.add(nomCompletClasse);
+                            }
+                        } else if (fichier.isDirectory()) {
+                            List<String> li = scan(chemin + "." + fichier.getName());
+                            liste.addAll(li);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return liste;
+    }
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
         try {
             String requestUrl = request.getRequestURI().substring(request.getContextPath().length());
             Mapping mapping = urlMappings.get(requestUrl);
-            out.println("<html>");
-            out.println("<head><title>URL Mapping</title></head>");
-            out.println("<body>");
+            
             if (mapping != null) {
+                Class<?> class1 = Class.forName(mapping.getClassName());
+                // Obtenir le nom de la méthode
+                String methodName = mapping.getMethodName();
+                
+                // Obtenir la méthode à partir de la classe et du nom de la méthode
+                // Note: Cet exemple suppose que la méthode n'a pas de paramètres
+                Method method = class1.getMethod(methodName);
+                Object instance = class1.getDeclaredConstructor().newInstance();
+            
+                // Invoquer la méthode sur l'instance
+                String result = (String) method.invoke(instance);
+                
+                out.println("<html>");
+                out.println("<head><title>URL Mapping</title></head>");
+                out.println("<body>");
                 out.println("<h1>URL: " + requestUrl + "</h1>");
                 out.println("<p>Class: " + mapping.getClassName() + "</p>");
                 out.println("<p>Method: " + mapping.getMethodName() + "</p>");
+                out.println("<p>Resultat: " + result + "</p>");
             } else {
                 out.println("<h1>No method associated with URL: " + requestUrl + "</h1>");
             }
             out.println("</body>");
-            out.println("</html>");
-        } finally {
+            out.println("</html>");   
+        
+        } catch(Exception e) {
+            e.printStackTrace();
+        } 
+        finally {
             out.close();
         }
     }
@@ -71,30 +118,5 @@ public class FrontController extends HttpServlet {
         processRequest(request, response);
     }
 
-    private List<String> scan(String chemin) throws Exception {
-        List<String> liste = new ArrayList<>();
-        try {
-            String cheminRepertoire = chemin.replace('.', '/');
-            URL urPackage = Thread.currentThread().getContextClassLoader().getResource(cheminRepertoire);
-            if (urPackage != null) {
-                File directory = new File(urPackage.getFile());
-                File[] fichiers = directory.listFiles();
-                if (fichiers != null) {
-                    for (File fichier : fichiers) {
-                        if (fichier.isFile() && fichier.getName().endsWith(".class")) {
-                            String nomClasse = fichier.getName().substring(0, fichier.getName().length() - 6);
-                            String nomCompletClasse = chemin + "." + nomClasse;
-                            liste.add(nomCompletClasse);
-                        } else if (fichier.isDirectory()) {
-                            List<String> li = scan(chemin + "." + fichier.getName());
-                            liste.addAll(li);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw e;
-        }
-        return liste;
-    }
+    
 }

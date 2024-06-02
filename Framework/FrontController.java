@@ -85,20 +85,24 @@ public class FrontController extends HttpServlet {
                 Object instance = class1.getDeclaredConstructor().newInstance();
             
                 // Invoquer la méthode sur l'instance
-                String result = (String) method.invoke(instance);
                 
-                out.println("<html>");
-                out.println("<head><title>URL Mapping</title></head>");
-                out.println("<body>");
-                out.println("<h1>URL: " + requestUrl + "</h1>");
-                out.println("<p>Class: " + mapping.getClassName() + "</p>");
-                out.println("<p>Method: " + mapping.getMethodName() + "</p>");
-                out.println("<p>Resultat: " + result + "</p>");
+                Object result;
+                if (method.getReturnType() == String.class) {
+                    result = (String) method.invoke(instance);    
+                    out.println("<h1>URL: " + requestUrl + "</h1>");
+                    out.println("<p>Class: " + mapping.getClassName() + "</p>");
+                    out.println("<p>Method: " + mapping.getMethodName() + "</p>");
+                    out.println("<p>Resultat: " + result + "</p>");
+                } else if (method.getReturnType() == ModelView.class) {
+                    ModelView modelViewResult = (ModelView) result;
+                    String url = modelViewResult.getUrl();
+                    // Dispatcher les données vers l'URL
+                    RequestDispatcher dispatcher = request.getRequestDispatcher(modelViewResult.getUrl());
+                    dispatcher.forward(request, response);
+                }
             } else {
                 out.println("<h1>No method associated with URL: " + requestUrl + "</h1>");
             }
-            out.println("</body>");
-            out.println("</html>");   
         
         } catch(Exception e) {
             e.printStackTrace();

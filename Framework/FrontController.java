@@ -11,28 +11,34 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import mg.itu.framework.*;
+import mg.itu.annotation.*;
 
 public class FrontController extends HttpServlet {
     private Map<String, Mapping> urlMappings;
+    private boolean isScan = false;
 
     @Override
     public void init() throws ServletException {
         urlMappings = new HashMap<>();
         try {
-            ServletContext context = getServletContext();
-            String chemin = context.getInitParameter("chemin");
-            List<String> controllers = scan(chemin); // Utilisation de la méthode scan mise à jour
-            for (String controller : controllers) {
-                Class<?> clazz = Class.forName(controller);
-                Method[] methods = clazz.getDeclaredMethods();
-                for (Method method : methods) {
-                    if (method.isAnnotationPresent(GET.class)) {
-                        GET annotation = method.getAnnotation(GET.class);
-                        String url = annotation.value();
-                        urlMappings.put(url, new Mapping(clazz.getName(), method.getName()));
+            if (!isScan) {
+                ServletContext context = getServletContext();
+                String chemin = context.getInitParameter("chemin");
+                List<String> controllers = scan(chemin); // Utilisation de la méthode scan mise à jour
+                for (String controller : controllers) {
+                    Class<?> clazz = Class.forName(controller);
+                    Method[] methods = clazz.getDeclaredMethods();
+                    for (Method method : methods) {
+                        if (method.isAnnotationPresent(GET.class)) {
+                            GET annotation = method.getAnnotation(GET.class);
+                            String url = annotation.value();
+                            urlMappings.put(url, new Mapping(clazz.getName(), method.getName()));
+                        }
                     }
-                }
+                }    
             }
+            
         } catch (Exception e) {
             throw new ServletException("Erreur lors de l'initialisation du FrontController", e);
         }
@@ -65,6 +71,7 @@ public class FrontController extends HttpServlet {
         } catch (Exception e) {
             throw e;
         }
+        this.isScan = true;
         return liste;
     }
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -76,29 +83,34 @@ public class FrontController extends HttpServlet {
             
             if (mapping != null) {
                 Class<?> class1 = Class.forName(mapping.getClassName());
-                // Obtenir le nom de la méthode
                 String methodName = mapping.getMethodName();
                 
-                // Obtenir la méthode à partir de la classe et du nom de la méthode
-                // Note: Cet exemple suppose que la méthode n'a pas de paramètres
                 Method method = class1.getMethod(methodName);
                 Object instance = class1.getDeclaredConstructor().newInstance();
-            
-                // Invoquer la méthode sur l'instance
                 
-                Object result;
+                Object result = new Object();
                 if (method.getReturnType() == String.class) {
+
                     result = (String) method.invoke(instance);    
                     out.println("<h1>URL: " + requestUrl + "</h1>");
                     out.println("<p>Class: " + mapping.getClassName() + "</p>");
                     out.println("<p>Method: " + mapping.getMethodName() + "</p>");
                     out.println("<p>Resultat: " + result + "</p>");
+
                 } else if (method.getReturnType() == ModelView.class) {
-                    ModelView modelViewResult = (ModelView) result;
+                    ModelView modelViewResult = (ModelView) method.invoke(instance);
                     String url = modelViewResult.getUrl();
+                    HashMap<String, Object> data = modelViewResult.getMap();
+                    for (String key : data.keySet()) {
+                        request.setAttribute(key, data.get(key));
+                    }
                     // Dispatcher les données vers l'URL
-                    RequestDispatcher dispatcher = request.getRequestDispatcher(modelViewResult.getUrl());
+                    RequestDispatcher dispatcher = request.getRequestDispatcher(url);
                     dispatcher.forward(request, response);
+                    System.out.println("the return is ModelandView");
+
+                } else {
+                    out.println("<p>Resultat: non reconue</p>");
                 }
             } else {
                 out.println("<h1>No method associated with URL: " + requestUrl + "</h1>");

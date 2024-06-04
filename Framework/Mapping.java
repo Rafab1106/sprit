@@ -1,4 +1,4 @@
-package mg.itu.controleur;
+package mg.itu.framework;
 
 public class Mapping {
     private String className;

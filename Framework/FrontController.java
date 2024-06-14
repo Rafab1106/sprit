@@ -133,7 +133,6 @@ public class FrontController extends HttpServlet {
             // TODO: handle exception
             e.printStackTrace();
         }
-        
     }
 
     @Override
@@ -145,6 +144,4 @@ public class FrontController extends HttpServlet {
             e.printStackTrace();
         }
     }
-
-    
 }

@@ -28,6 +28,7 @@ public class FrontController extends HttpServlet {
             throw new ServletException("Erreur lors de l'initialisation du FrontController", e);
         }
     }
+    
     private void setMapping(String chemin)throws Exception{
         urlMappings = new HashMap<>();
         List<String> controllers = scan(chemin); // Utilisation de la méthode scan mise à jour
@@ -96,7 +97,7 @@ public class FrontController extends HttpServlet {
             Method method = class1.getMethod(methodName);
             Object instance = class1.getDeclaredConstructor().newInstance();
             
-            Object result = new Object();
+            Object result = mapping.getReponse(request);
             if (method.getReturnType() == String.class) {
 
                 result = (String) method.invoke(instance);    
@@ -106,17 +107,17 @@ public class FrontController extends HttpServlet {
                 out.println("<p>Resultat: " + result + "</p>");
 
             } else if (method.getReturnType() == ModelView.class) {
-                ModelView modelViewResult = (ModelView) method.invoke(instance);
-                String url = modelViewResult.getUrl();
-                HashMap<String, Object> data = modelViewResult.getMap();
-                for (String key : data.keySet()) {
-                    request.setAttribute(key, data.get(key));
-                }
-                // Dispatcher les données vers l'URL
-                RequestDispatcher dispatcher = request.getRequestDispatcher(url);
-                dispatcher.forward(request, response);
                 System.out.println("the return is ModelandView");
-
+                ModelView modelViewResult = (ModelView) result;
+                String url = modelViewResult.getUrl();
+                HashMap<String, Object> data = modelViewResult.getData();
+                for (Map.Entry<String, Object> entry : data.entrySet()) {
+                    request.setAttribute(entry.getKey(), entry.getValue());
+                }
+                request.getRequestDispatcher(url).forward(request, response);
+                // // Dispatcher les données vers l'URL
+                // RequestDispatcher dispatcher = request.getRequestDispatcher(url);
+                // dispatcher.forward(request, response);
             } else {
                 throw new Exception("le type de retour est non reconue");
             }

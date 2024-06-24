@@ -46,7 +46,7 @@ public class FrontController extends HttpServlet {
                         if (urlMappings.containsKey(url)) {
                             throw new Exception("Duplicate url ["+ url +"] dans "+ clazz.getName() + " et "+ urlMappings.get(url).getClassName());
                         }
-                        urlMappings.put(url, new Mapping(clazz.getName(), method.getName(),controller,method));
+                        urlMappings.put(url, new Mapping(clazz.getName(), method.getName(),clazz,method));
                     }
                 }    
                 

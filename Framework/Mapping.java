@@ -121,7 +121,7 @@ public class Mapping {
                 args[i] = request.getParameter(parameters[i].getName());
                 if (parameters[i].isAnnotationPresent(Param.class)) {
                     Param param = parameters[i].getAnnotation(Param.class);
-                    String paramName = param.value();
+                    String paramName = param.name();
                     String paramValue = request.getParameter(paramName);
 
                     // For simplicity, assume all parameters are of type String

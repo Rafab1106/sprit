@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 :: Déclaration des variables
-set "work_dir=E:\TSITO\COURS\s3\Git\sprit"
+set "work_dir=E:\TSITO\COURS\s4\sprit"
 set "src=%work_dir%\Framework"
 set "lib=%work_dir%\lib"
 

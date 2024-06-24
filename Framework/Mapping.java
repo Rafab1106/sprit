@@ -37,6 +37,21 @@ public class Mapping {
     public String getMethodName() {
         return methodName;
     }
+    public Method getMethodByName(Class<?> cls, String methodName) throws Exception {
+        // Obtenir toutes les méthodes de la classe
+        Method[] methods = cls.getDeclaredMethods();
+        for (Method method : methods) {
+            // Vérifier si le nom de la méthode correspond au nom donné
+            if (method.getName().equals(methodName)) {
+                return method;
+
+            }
+        }
+        Exception e = new Exception("Tsisy methode");
+        throw e;
+        // Retourner null si aucune méthode correspondante n'est trouvée
+
+    }
     public String retour() {
         String response = "";
         try {
@@ -117,7 +132,7 @@ public class Mapping {
                 String nomParametre = parameters[i].getName();
                 if (parameters[i].isAnnotationPresent(Param.class)) {
                     Param param = parameters[i].getAnnotation(Param.class);
-                    nomParametre = param.value();
+                    nomParametre = param.name();
 
                 }
                 Class cl = parameters[i].getType();
@@ -130,7 +145,7 @@ public class Mapping {
                     if (sep.length > 1) {
                         if (sep[0].equalsIgnoreCase(nomParametre)) {
                             String maj = sep[1].substring(0, 1).toUpperCase() + sep[1].substring(1);
-                            Method m = getMethodByName(cl, "set" + maj);
+                            Method m = this.getMethodByName(cl, "set" + maj);
                             Parameter[] par = m.getParameters();
                             m.invoke(object, setToObject(par[0].getType(), request.getParameter(a)));
                         }

@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import mg.itu.framework.*;
+import mg.itu.util.Mapping;
 import mg.itu.util.*;
 import mg.itu.annotation.*;
 
@@ -45,7 +46,7 @@ public class FrontController extends HttpServlet {
                         if (urlMappings.containsKey(url)) {
                             throw new Exception("Duplicate url ["+ url +"] dans "+ clazz.getName() + " et "+ urlMappings.get(url).getClassName());
                         }
-                        urlMappings.put(url, new Mapping(clazz.getName(), method.getName()));
+                        urlMappings.put(url, new Mapping(clazz.getName(), method.getName(),controller,method));
                     }
                 }    
                 
@@ -111,7 +112,7 @@ public class FrontController extends HttpServlet {
                 System.out.println("the return is ModelandView");
                 ModelView modelViewResult = (ModelView) result;
                 String url = modelViewResult.getUrl();
-                HashMap<String, Object> data = modelViewResult.getData();
+                HashMap<String, Object> data = modelViewResult.getMap();
                 for (Map.Entry<String, Object> entry : data.entrySet()) {
                     request.setAttribute(entry.getKey(), entry.getValue());
                 }

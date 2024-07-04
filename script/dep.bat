@@ -5,7 +5,6 @@ setlocal enabledelayedexpansion
 set "work_dir=E:\TSITO\COURS\s4\sprit"
 set "src=%work_dir%\Framework"
 set "lib=%work_dir%\lib"
-
 :: Créer une liste de tous les fichiers .java dans le répertoire src et ses sous-répertoires
 dir /s /B "%src%\*.java" > sources.txt
 dir /s /B "%lib%\*.jar" > libs.txt

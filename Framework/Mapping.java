@@ -123,9 +123,9 @@ public class Mapping {
                     Param param = parameters[i].getAnnotation(Param.class);
                     String paramName = param.name();
                     String paramValue = request.getParameter(paramName);
-
-                    // For simplicity, assume all parameters are of type String
                     args[i] = setToObject(parameters[i].getType(), paramValue);
+                } else {
+                    throw new Exception("ETU002413 , il y a une parametre non annote");
                 }
             } else {
                 ArrayList<String> listeParametre = getDeclareParameters(request);
@@ -133,7 +133,8 @@ public class Mapping {
                 if (parameters[i].isAnnotationPresent(Param.class)) {
                     Param param = parameters[i].getAnnotation(Param.class);
                     nomParametre = param.name();
-
+                } else {
+                    throw new Exception("ETU002413 , il y a une parametre non annote");
                 }
                 Class cl = parameters[i].getType();
                 // Employer e=new Employer();

@@ -37,7 +37,7 @@ public class FrontController extends HttpServlet {
             for (String controller : controllers) {
                 Class<?> clazz = Class.forName(controller);
                 Method[] methods = clazz.getDeclaredMethods();
-                boolean hasGetMethod = false; // Flag pour vérifier les méthodes @GET
+                boolean hasGetMethod = false;
                 for (Method method : methods) {
                     if (method.isAnnotationPresent(GET.class)) {
                         hasGetMethod = true;
@@ -95,20 +95,20 @@ public class FrontController extends HttpServlet {
         if (mapping != null) {
             Class<?> class1 = Class.forName(mapping.getClassName());
             String methodName = mapping.getMethodName();
-            
-            Method method = class1.getMethod(methodName);
-            Object instance = class1.getDeclaredConstructor().newInstance();
-            
+            System.out.println(methodName);
             Object result = mapping.getReponse(request);
-            if (method.getReturnType() == String.class) {
+            // Method method = class1.getMethod(methodName);
+            Object instance = class1.getDeclaredConstructor().newInstance();
 
-                result = (String) method.invoke(instance);    
+            if (result instanceof String) {
+
+                // result = (String) method.invoke(instance);    
                 out.println("<h1>URL: " + requestUrl + "</h1>");
                 out.println("<p>Class: " + mapping.getClassName() + "</p>");
                 out.println("<p>Method: " + mapping.getMethodName() + "</p>");
-                out.println("<p>Resultat: " + result + "</p>");
+                out.println("<p>Resultat: " + mapping.retour() + "</p>");
 
-            } else if (method.getReturnType() == ModelView.class) {
+            } else if (result instanceof ModelView) {
                 System.out.println("the return is ModelandView");
                 ModelView modelViewResult = (ModelView) result;
                 String url = modelViewResult.getUrl();
@@ -117,9 +117,6 @@ public class FrontController extends HttpServlet {
                     request.setAttribute(entry.getKey(), entry.getValue());
                 }
                 request.getRequestDispatcher(url).forward(request, response);
-                // // Dispatcher les données vers l'URL
-                // RequestDispatcher dispatcher = request.getRequestDispatcher(url);
-                // dispatcher.forward(request, response);
             } else {
                 throw new Exception("le type de retour est non reconue");
             }
@@ -130,21 +127,23 @@ public class FrontController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        PrintWriter out = response.getWriter();
         try {
             processRequest(request, response);    
         } catch (Exception e) {
             // TODO: handle exception
-            e.printStackTrace();
+            out.println(e.getMessage());
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        PrintWriter out = response.getWriter();
         try {
             processRequest(request, response);    
         } catch (Exception e) {
             // TODO: handle exception
-            e.printStackTrace();
+            out.println(e.getMessage());
         }
     }
 }

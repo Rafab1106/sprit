@@ -132,7 +132,7 @@ public class FrontController extends HttpServlet {
             processRequest(request, response);    
         } catch (Exception e) {
             // TODO: handle exception
-            out.println(e.getMessage());
+            out.println(e);
         }
     }
 
@@ -143,7 +143,7 @@ public class FrontController extends HttpServlet {
             processRequest(request, response);    
         } catch (Exception e) {
             // TODO: handle exception
-            out.println(e.getMessage());
+            out.println(e);
         }
     }
 }

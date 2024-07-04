@@ -1,5 +1,6 @@
 package mg.itu.util;
 
+import jakarta.servlet.http.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -116,46 +117,45 @@ public class Mapping {
         Object[] args = new Object[parameters.length];
 
         for (int i = 0; i < parameters.length; i++) {
-
-            if (isPrimitiveOrString(parameters[i].getType())) {
-                args[i] = request.getParameter(parameters[i].getName());
-                if (parameters[i].isAnnotationPresent(Param.class)) {
+            if (parameters[i].isAnnotationPresent(Param.class)) {
+                if (isPrimitiveOrString(parameters[i].getType())) {
+                    args[i] = request.getParameter(parameters[i].getName());
                     Param param = parameters[i].getAnnotation(Param.class);
                     String paramName = param.name();
                     String paramValue = request.getParameter(paramName);
                     args[i] = setToObject(parameters[i].getType(), paramValue);
+                } else if (parameters[i].getType() == MySession.class) {
+                    HttpSession httpSession = request.getSession();
+                    MySession mySession = new MySession(httpSession);
+                    args[i] = mySession;
                 } else {
-                    throw new Exception("ETU002413 , il y a une parametre non annote");
-                }
-            } else {
-                ArrayList<String> listeParametre = getDeclareParameters(request);
-                String nomParametre = parameters[i].getName();
-                if (parameters[i].isAnnotationPresent(Param.class)) {
-                    Param param = parameters[i].getAnnotation(Param.class);
-                    nomParametre = param.name();
-                } else {
-                    throw new Exception("ETU002413 , il y a une parametre non annote");
-                }
-                Class cl = parameters[i].getType();
-                // Employer e=new Employer();
-                Object object = cl.getConstructor().newInstance();
-                Object p[] = new Object[1];
-
-                for (String a : listeParametre) {
-                    String[] sep = a.split("\\.");
-                    if (sep.length > 1) {
-                        if (sep[0].equalsIgnoreCase(nomParametre)) {
-                            String maj = sep[1].substring(0, 1).toUpperCase() + sep[1].substring(1);
-                            Method m = this.getMethodByName(cl, "set" + maj);
-                            Parameter[] par = m.getParameters();
-                            m.invoke(object, setToObject(par[0].getType(), request.getParameter(a)));
+                    ArrayList<String> listeParametre = getDeclareParameters(request);
+                    String nomParametre = parameters[i].getName();
+                        Param param = parameters[i].getAnnotation(Param.class);
+                        nomParametre = param.name();
+                    Class cl = parameters[i].getType();
+                    // Employer e=new Employer();
+                    Object object = cl.getConstructor().newInstance();
+                    Object p[] = new Object[1];
+    
+                    for (String a : listeParametre) {
+                        String[] sep = a.split("\\.");
+                        if (sep.length > 1) {
+                            if (sep[0].equalsIgnoreCase(nomParametre)) {
+                                String maj = sep[1].substring(0, 1).toUpperCase() + sep[1].substring(1);
+                                Method m = this.getMethodByName(cl, "set" + maj);
+                                Parameter[] par = m.getParameters();
+                                m.invoke(object, setToObject(par[0].getType(), request.getParameter(a)));
+                            }
                         }
                     }
-                }
-                args[i] = object;
+                    args[i] = object;
+                }    
+            } else {
+                throw new Exception("ETU002413 , il y a une parametre non annote");
             }
+            
         }
         return methode.invoke(classe.getDeclaredConstructor().newInstance(), args);
-
     }
 }

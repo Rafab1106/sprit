@@ -39,6 +39,11 @@ public class FrontController extends HttpServlet {
                 Method[] methods = clazz.getDeclaredMethods();
                 boolean hasGetMethod = false;
                 for (Method method : methods) {
+                    // if (method.isAnnotationPresent(GET.class) && 
+                    //     method.isAnnotationPresent(RestAPI.class || !method.isAnnotationPresent(GET.class) && 
+                    //     method.isAnnotationPresent(RestAPI.class))) {
+                        
+                    // } else 
                     if (method.isAnnotationPresent(GET.class)) {
                         hasGetMethod = true;
                         GET annotation = method.getAnnotation(GET.class);
@@ -47,6 +52,7 @@ public class FrontController extends HttpServlet {
                             throw new Exception("Duplicate url ["+ url +"] dans "+ clazz.getName() + " et "+ urlMappings.get(url).getClassName());
                         }
                         urlMappings.put(url, new Mapping(clazz.getName(), method.getName(),clazz,method));
+
                     }
                 }    
                 
@@ -95,30 +101,57 @@ public class FrontController extends HttpServlet {
         if (mapping != null) {
             Class<?> class1 = Class.forName(mapping.getClassName());
             String methodName = mapping.getMethodName();
-            System.out.println(methodName);
+            // System.out.println(methodName);
             Object result = mapping.getReponse(request);
-            // Method method = class1.getMethod(methodName);
+            Method method = mapping.getMethod();
             Object instance = class1.getDeclaredConstructor().newInstance();
 
-            if (result instanceof String) {
-
-                // result = (String) method.invoke(instance);    
-                out.println("<h1>URL: " + requestUrl + "</h1>");
-                out.println("<p>Class: " + mapping.getClassName() + "</p>");
-                out.println("<p>Method: " + mapping.getMethodName() + "</p>");
-                out.println("<p>Resultat: " + mapping.retour() + "</p>");
-
-            } else if (result instanceof ModelView) {
-                System.out.println("the return is ModelandView");
-                ModelView modelViewResult = (ModelView) result;
-                String url = modelViewResult.getUrl();
-                HashMap<String, Object> data = modelViewResult.getMap();
-                for (Map.Entry<String, Object> entry : data.entrySet()) {
-                    request.setAttribute(entry.getKey(), entry.getValue());
+            if (method.isAnnotationPresent(RestAPI.class)) {
+                // Sérialiser en JSON si @RestAPI est présent
+                ObjectMapper objectMapper = new ObjectMapper();
+                String jsonResponse = objectMapper.writeValueAsString(mapping.retour());
+                out.println("Voici le retour en Json "+jsonResponse); // Envoyer la réponse JSON
+                if (result instanceof String) {
+                    
+                    // result = (String) method.invoke(instance);    
+                    out.println("<h1>URL: " + requestUrl + "</h1>");
+                    out.println("<p>Class: " + mapping.getClassName() + "</p>");
+                    out.println("<p>Method: " + mapping.getMethodName() + "</p>");
+                    out.println("<p>Resultat: " + jsonResponse + "</p>");
+    
+                } else if (result instanceof ModelView) {
+                    System.out.println("the return is ModelandView");
+                    ModelView modelViewResult = (ModelView) mapping.retour();
+                    String url = modelViewResult.getUrl();
+                    HashMap<String, Object> data = modelViewResult.getMap();
+                    for (Map.Entry<String, Object> entry : data.entrySet()) {
+                        request.setAttribute(entry.getKey(), entry.getValue());
+                    }
+                    request.getRequestDispatcher(url).forward(request, response);
+                } else {
+                    throw new Exception("le type de retour est non reconue");
                 }
-                request.getRequestDispatcher(url).forward(request, response);
             } else {
-                throw new Exception("le type de retour est non reconue");
+                if (result instanceof String) {
+
+                    // result = (String) method.invoke(instance);    
+                    out.println("<h1>URL: " + requestUrl + "</h1>");
+                    out.println("<p>Class: " + mapping.getClassName() + "</p>");
+                    out.println("<p>Method: " + mapping.getMethodName() + "</p>");
+                    out.println("<p>Resultat: " + mapping.retour() + "</p>");
+    
+                } else if (result instanceof ModelView) {
+                    System.out.println("the return is ModelandView");
+                    ModelView modelViewResult = (ModelView) result;
+                    String url = modelViewResult.getUrl();
+                    HashMap<String, Object> data = modelViewResult.getMap();
+                    for (Map.Entry<String, Object> entry : data.entrySet()) {
+                        request.setAttribute(entry.getKey(), entry.getValue());
+                    }
+                    request.getRequestDispatcher(url).forward(request, response);
+                } else {
+                    throw new Exception("le type de retour est non reconue");
+                }
             }
         } else {
             out.println("<h1>No method associated with URL: " + requestUrl + "</h1>");

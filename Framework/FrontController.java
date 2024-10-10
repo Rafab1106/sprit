@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import mg.itu.framework.*;
-import mg.itu.util.Mapping;
 import mg.itu.util.*;
 import mg.itu.annotation.*;
 
@@ -32,34 +31,36 @@ public class FrontController extends HttpServlet {
         }
     }
     
-    private void setMapping(String chemin)throws Exception{
+    private void setMapping(String chemin)throws Exception {
         urlMappings = new HashMap<>();
         List<String> controllers = scan(chemin); // Utilisation de la méthode scan mise à jour
-            for (String controller : controllers) {
-                Class<?> clazz = Class.forName(controller);
-                Method[] methods = clazz.getDeclaredMethods();
-                boolean hasGetMethod = false;
-                for (Method method : methods) {
-                    if (method.isAnnotationPresent(GET.class) || method.isAnnotationPresent(POST.class)) {
-                        if (method.isAnnotationPresent(GET.class)) {
-                            methodAnnot = "GET";
-                        } else if (method.isAnnotationPresent(POST.class)) {
-                            methodAnnot = "POST";
-                        }
-                        hasGetMethod = true;
-                        URL annotation = method.getAnnotation(URL.class);
-                        String url = annotation.value();
-                        if (urlMappings.containsKey(url)) {
-                            throw new Exception("Duplicate url ["+ url +"] dans "+ clazz.getName() + " et "+ urlMappings.get(url).getClassName());
-                        }
-                        urlMappings.put(url, new Mapping(clazz.getName(), method.getName(),clazz,method));
+        for (String controller : controllers) {
+            Class<?> clazz = Class.forName(controller);
+            Method[] methods = clazz.getDeclaredMethods();
+            boolean hasGetMethod = false;
+            VerbAction vb = new VerbAction();
+            for (Method method : methods) {
+                if (method.isAnnotationPresent(GET.class) || method.isAnnotationPresent(POST.class)) {
+                    if (method.isAnnotationPresent(GET.class)) {
+                        methodAnnot = method.getAnnotation(GET.class).toString();
+                    } else if (method.isAnnotationPresent(POST.class)) {
+                        methodAnnot = method.getAnnotation(POST.class).toString();
                     }
-                }    
-                
-                if (!hasGetMethod) {
-                    throw new Exception("La classe " + clazz.getName() + " n'a aucune méthode annotée avec @GET.");
+                    hasGetMethod = true;
+                    URL annotation = method.getAnnotation(URL.class);
+                    String url = annotation.value();
+                    if (urlMappings.containsKey(url)) {
+                        throw new Exception("Duplicate url ["+ url +"] dans "+ clazz.getName() + " et "+ urlMappings.get(url).getClassName());
+                    }
+                    vb = new VerbAction(methodAnnot,method.getName());
+                    urlMappings.put(url, new Mapping(clazz.getName(), method.getName(),clazz,method));
                 }
+            }    
+            
+            if (!hasGetMethod) {
+                throw new Exception("La classe " + clazz.getName() + " n'a aucune méthode annotée avec @GET ou @POST ");
             }
+        }
     }
     private List<String> scan(String chemin) throws Exception {
         List<String> liste = new ArrayList<>();
@@ -111,14 +112,13 @@ public class FrontController extends HttpServlet {
                     // Sérialiser en JSON si @RestAPI est présent
                     ObjectMapper objectMapper = new ObjectMapper();
                     String jsonResponse = objectMapper.writeValueAsString(mapping.retour());
-                    out.println("Voici le retour en Json "+jsonResponse); // Envoyer la réponse JSON
                     if (result instanceof String) {
                         
                         // result = (String) method.invoke(instance);    
                         out.println("<h1>URL: " + requestUrl + "</h1>");
                         out.println("<p>Class: " + mapping.getClassName() + "</p>");
                         out.println("<p>Method: " + mapping.getMethodName() + "</p>");
-                        out.println("<p>Resultat: " + jsonResponse + "</p>");
+                        out.println("<p>Resultat is in json: " + jsonResponse + "</p>");
         
                     } else if (result instanceof ModelView) {
                         System.out.println("the return is ModelandView");

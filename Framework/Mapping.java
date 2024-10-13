@@ -27,6 +27,9 @@ public class Mapping {
         this.classe = classe;
         this.methode = method;
     }
+    public Mapping(){
+        
+    }
     public String getClassName() {
         return className;
     }
@@ -157,5 +160,20 @@ public class Mapping {
             
         }
         return methode.invoke(classe.getDeclaredConstructor().newInstance(), args);
+    }
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
+    }
+    public Class getClasse() {
+        return classe;
+    }
+    public void setClasse(Class classe) {
+        this.classe = classe;
+    }
+    public Method getMethode() {
+        return methode;
+    }
+    public void setMethode(Method methode) {
+        this.methode = methode;
     }
 }

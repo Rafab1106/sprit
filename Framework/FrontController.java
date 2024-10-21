@@ -160,6 +160,8 @@ public class FrontController extends HttpServlet {
             
         } else {
             out.println("<h1>No method associated with URL: " + requestUrl + "</h1>");
+            Exception e = new Exception("no method");
+            response.sendError(404,e.getMessage());
         }
     }
 

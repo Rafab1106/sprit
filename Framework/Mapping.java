@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
+import jakarta.servlet.http.Part;
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.annotation.Param;
 
@@ -131,6 +132,13 @@ public class Mapping {
                     HttpSession httpSession = request.getSession();
                     MySession mySession = new MySession(httpSession);
                     args[i] = mySession;
+                } else if (parameters[i].getType() == Part.class) {
+                     // Gestion du fichier avec Part
+                    Param param = parameters[i].getAnnotation(Param.class);
+                    String paramName = param.name();
+                    Part filePart = request.getPart(paramName); // Récupère le fichier depuis le formulaire
+                    args[i] = filePart; // Ajoute le fichier `Part` dans les arguments de la méthode
+                    
                 } else {
                     ArrayList<String> listeParametre = getDeclareParameters(request);
                     String nomParametre = parameters[i].getName();

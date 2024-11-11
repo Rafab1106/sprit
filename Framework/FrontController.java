@@ -112,6 +112,7 @@ public class FrontController extends HttpServlet {
                     // Sérialiser en JSON si @RestAPI est présent
                     ObjectMapper objectMapper = new ObjectMapper();
                     String jsonResponse = objectMapper.writeValueAsString(mapping.retour());
+                    
                     if (result instanceof String) {
                         
                         // result = (String) method.invoke(instance);    

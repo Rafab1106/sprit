@@ -1,6 +1,8 @@
 package mg.itu.util;
 
 import jakarta.servlet.http.*;
+
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -9,6 +11,7 @@ import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.annotation.Param;
+import mg.itu.annotation.Required;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -115,6 +118,22 @@ public class Mapping {
         }
         
     }
+    public void validerAttribute(Object object) throws Exception{
+        Field[] fields = object.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            if (field.isAnnotationPresent(Required.class)) {
+                if (field.get(object) == null) {
+                    throw new Exception("la valeur de "+field.getName()+ " ne doit pas etre null");
+                }
+            } else if (field.isAnnotationPresent(Min.class)) {
+                Min min = field.getAnnotation(Min.class);
+                if (field.get(object) < min.value()) {
+                    throw new Exception("la valeur de "+field.getName()+ " ne doit pas etre en dessous de "+min.value());
+                }
+            }
+        }
+    }
     public Object getReponse(HttpServletRequest request) throws Exception {
         Parameter[] parameters = methode.getParameters();
         Object[] args = new Object[parameters.length];
@@ -134,13 +153,12 @@ public class Mapping {
                 } else {
                     ArrayList<String> listeParametre = getDeclareParameters(request);
                     String nomParametre = parameters[i].getName();
-                        Param param = parameters[i].getAnnotation(Param.class);
-                        nomParametre = param.name();
+                    Param param = parameters[i].getAnnotation(Param.class);
+                    nomParametre = param.name();
                     Class cl = parameters[i].getType();
                     // Employer e=new Employer();
                     Object object = cl.getConstructor().newInstance();
-                    Object p[] = new Object[1];
-    
+                    validerAttribute(object);// validation des attributs des objets
                     for (String a : listeParametre) {
                         String[] sep = a.split("\\.");
                         if (sep.length > 1) {

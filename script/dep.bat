@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 :: Déclaration des variables
-set "work_dir=E:\TSITO\COURS\s4\sprit"
+set "work_dir=C:\Users\DCI\OneDrive\Documents\GitHub\sprit"
 set "src=%work_dir%\Framework"
 set "lib=%work_dir%\lib"
 :: Créer une liste de tous les fichiers .java dans le répertoire src et ses sous-répertoires

@@ -7,4 +7,3 @@ import java.lang.annotation.RetentionPolicy;
 public @interface GET {
     String value();
 }
- 

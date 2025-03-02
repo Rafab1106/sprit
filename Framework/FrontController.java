@@ -47,13 +47,15 @@ public class FrontController extends HttpServlet {
                         methodAnnot = method.getAnnotation(POST.class).toString();
                     }
                     hasGetMethod = true;
-                    URL annotation = method.getAnnotation(URL.class);
-                    String url = annotation.value();
-                    if (urlMappings.containsKey(url)) {
-                        throw new Exception("Duplicate url ["+ url +"] dans "+ clazz.getName() + " et "+ urlMappings.get(url).getClassName());
+                    if (method.isAnnotationPresent(url.class)) {
+                        URL annotation = method.getAnnotation(url.class);
+                        String urlroad = annotation.value();
+                        if (urlroadMappings.containsKey(urlroad)) {
+                            throw new Exception("Duplicate urlroad ["+ urlroad +"] dans "+ clazz.getName() + " et "+ urlroadMappings.get(urlroad).getClassName());
+                        }
+                        vb = new VerbAction(methodAnnot,method.getName());
+                        urlroadMappings.put(urlroad, new Mapping(clazz.getName(), method.getName(),clazz,method));    
                     }
-                    vb = new VerbAction(methodAnnot,method.getName());
-                    urlMappings.put(url, new Mapping(clazz.getName(), method.getName(),clazz,method));
                 }
             }    
             
@@ -105,20 +107,20 @@ public class FrontController extends HttpServlet {
             String methodName = mapping.getMethodName();
             // System.out.println(methodName);
             Object result = mapping.getReponse(request);
-            Method method = mapping.getMethod();
+            Method method = mapping.getMethodName();
             Object instance = class1.getDeclaredConstructor().newInstance();
             if (methodAnnot.equals(methodForm)) {
                 if (method.isAnnotationPresent(RestAPI.class)) {
                     // Sérialiser en JSON si @RestAPI est présent
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    String jsonResponse = objectMapper.writeValueAsString(mapping.retour());
+                    // ObjectMapper objectMapper = new ObjectMapper();
+                    // String jsonResponse = objectMapper.writeValueAsString(mapping.retour());
                     if (result instanceof String) {
                         
                         // result = (String) method.invoke(instance);    
                         out.println("<h1>URL: " + requestUrl + "</h1>");
                         out.println("<p>Class: " + mapping.getClassName() + "</p>");
                         out.println("<p>Method: " + mapping.getMethodName() + "</p>");
-                        out.println("<p>Resultat is in json: " + jsonResponse + "</p>");
+                        // out.println("<p>Resultat is in json: " + jsonResponse + "</p>");
         
                     } else if (result instanceof ModelView) {
                         System.out.println("the return is ModelandView");

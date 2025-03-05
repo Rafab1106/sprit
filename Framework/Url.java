@@ -1,9 +1,9 @@
 package mg.itu.annotation;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
-public @interface url {
+@Target(ElementType.METHOD)
+public @interface Url {
     String value();
 }

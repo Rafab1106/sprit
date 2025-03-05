@@ -47,14 +47,14 @@ public class FrontController extends HttpServlet {
                         methodAnnot = method.getAnnotation(POST.class).toString();
                     }
                     hasGetMethod = true;
-                    if (method.isAnnotationPresent(url.class)) {
-                        URL annotation = method.getAnnotation(url.class);
+                    if (method.isAnnotationPresent(Url.class)) {
+                        Url annotation = method.getAnnotation(Url.class);
                         String urlroad = annotation.value();
-                        if (urlroadMappings.containsKey(urlroad)) {
-                            throw new Exception("Duplicate urlroad ["+ urlroad +"] dans "+ clazz.getName() + " et "+ urlroadMappings.get(urlroad).getClassName());
+                        if (urlMappings.containsKey(urlroad)) {
+                            throw new Exception("Duplicate urlroad ["+ urlroad +"] dans "+ clazz.getName() + " et "+ urlMappings.get(urlroad).getClassName());
                         }
                         vb = new VerbAction(methodAnnot,method.getName());
-                        urlroadMappings.put(urlroad, new Mapping(clazz.getName(), method.getName(),clazz,method));    
+                        urlMappings.put(urlroad, new Mapping(clazz.getName(), method.getName(),clazz,method));    
                     }
                 }
             }    
@@ -107,7 +107,7 @@ public class FrontController extends HttpServlet {
             String methodName = mapping.getMethodName();
             // System.out.println(methodName);
             Object result = mapping.getReponse(request);
-            Method method = mapping.getMethodName();
+            Method method = class1.getMethod(mapping.getMethodName());
             Object instance = class1.getDeclaredConstructor().newInstance();
             if (methodAnnot.equals(methodForm)) {
                 if (method.isAnnotationPresent(RestAPI.class)) {
@@ -141,7 +141,7 @@ public class FrontController extends HttpServlet {
                         out.println("<h1>URL: " + requestUrl + "</h1>");
                         out.println("<p>Class: " + mapping.getClassName() + "</p>");
                         out.println("<p>Method: " + mapping.getMethodName() + "</p>");
-                        out.println("<p>Resultat: " + mapping.retour() + "</p>");
+                        out.println("<p>Resultat: " + mapping.retour().toString() + "</p>");
         
                     } else if (result instanceof ModelView) {
                         System.out.println("the return is ModelandView");

@@ -10,8 +10,10 @@ import java.util.Enumeration;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
+import mg.itu.annotation.Min;
 import mg.itu.annotation.Param;
 import mg.itu.annotation.Required;
+import mg.itu.erreur.Erreur;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -59,8 +61,8 @@ public class Mapping {
         // Retourner null si aucune méthode correspondante n'est trouvée
 
     }
-    public String retour() {
-        String response = "";
+    public Object retour() {
+        Object response = "";
         try {
             Object instance = this.classe.getDeclaredConstructor().newInstance();
             response = this.methode.invoke(instance).toString();
@@ -118,21 +120,25 @@ public class Mapping {
         }
         
     }
-    public void validerAttribute(Object object) throws Exception{
+    public Erreur validerAttribute(Object object) throws Exception{
         Field[] fields = object.getClass().getDeclaredFields();
+        Erreur erreur = new Erreur(null,null);
         for (Field field : fields) {
             field.setAccessible(true);
             if (field.isAnnotationPresent(Required.class)) {
                 if (field.get(object) == null) {
+                    erreur = new Erreur("Ne doit pas etre null",field.getName());
                     throw new Exception("la valeur de "+field.getName()+ " ne doit pas etre null");
                 }
             } else if (field.isAnnotationPresent(Min.class)) {
                 Min min = field.getAnnotation(Min.class);
-                if (field.get(object) < min.value()) {
+                if (Double.parseDouble(field.get(object).toString()) < min.value()) {
+                    erreur = new Erreur("Ne doit pas etre en dessous de "+min.value(),field.getName());
                     throw new Exception("la valeur de "+field.getName()+ " ne doit pas etre en dessous de "+min.value());
                 }
             }
         }
+        return erreur;
     }
     public Object getReponse(HttpServletRequest request) throws Exception {
         Parameter[] parameters = methode.getParameters();
@@ -146,10 +152,12 @@ public class Mapping {
                     String paramName = param.name();
                     String paramValue = request.getParameter(paramName);
                     args[i] = setToObject(parameters[i].getType(), paramValue);
+
                 } else if (parameters[i].getType() == MySession.class) {
                     HttpSession httpSession = request.getSession();
                     MySession mySession = new MySession(httpSession);
                     args[i] = mySession;
+
                 } else {
                     ArrayList<String> listeParametre = getDeclareParameters(request);
                     String nomParametre = parameters[i].getName();
@@ -158,7 +166,7 @@ public class Mapping {
                     Class cl = parameters[i].getType();
                     // Employer e=new Employer();
                     Object object = cl.getConstructor().newInstance();
-                    validerAttribute(object);// validation des attributs des objets
+                    Erreur e = validerAttribute(object);// validation des attributs des objets
                     for (String a : listeParametre) {
                         String[] sep = a.split("\\.");
                         if (sep.length > 1) {
@@ -168,6 +176,9 @@ public class Mapping {
                                 Parameter[] par = m.getParameters();
                                 m.invoke(object, setToObject(par[0].getType(), request.getParameter(a)));
                             }
+                        }
+                        if (e.getMessage() == null) {
+                            
                         }
                     }
                     args[i] = object;
